@@ -42,6 +42,35 @@ pip install -r requirements.txt
 
 `google-cloud-firestore` n'est requis que pour l'écriture Firestore. La découverte, la vérification et les exports JSON/CSV utilisent la bibliothèque standard Python.
 
+## Interface web (sans ligne de commande)
+
+Si tu préfères travailler dans une vraie interface, lance le serveur local :
+
+```bash
+python scripts/web.py
+```
+
+Le navigateur s'ouvre sur `http://127.0.0.1:8000/`. La page regroupe tout le workflow :
+
+1. **Découverte** — coche une ou plusieurs catégories, règle le nombre de résultats par requête,
+   inclus ou non les services connus (seeds), puis lance la découverte.
+2. **Vérification & révision** — vérifie les liens (tous ou un seul service), édite directement
+   chaque lien et chaque note dans le tableau, et bascule le statut `verified` / `needs_review` /
+   `not_found` à la main.
+3. **Export & Firestore** — télécharge le résultat en JSON ou CSV, ou écris-le dans la collection
+   Firestore `cancellationGuides`.
+
+Options du serveur :
+
+- `--port 8000` change le port d'écoute.
+- `--host 127.0.0.1` change l'adresse d'écoute (laisse `127.0.0.1` pour un usage local privé).
+- `--no-browser` ne lance pas le navigateur automatiquement.
+
+Le serveur utilise uniquement la bibliothèque standard Python : aucune dépendance supplémentaire.
+Comme la version en ligne de commande, il ne lit que des pages et URL publiques (aucun login,
+captcha ou paywall contourné). Pour l'écriture Firestore, installe `google-cloud-firestore` et
+configure les identifiants (ADC ou `GOOGLE_APPLICATION_CREDENTIALS`).
+
 ## Catégories disponibles
 
 - `streaming-video` — streaming vidéo

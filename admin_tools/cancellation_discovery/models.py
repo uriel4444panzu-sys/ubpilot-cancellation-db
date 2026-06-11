@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timezone
 import re
 import unicodedata
@@ -55,3 +55,24 @@ class CancellationGuide:
             category=category,
             **kwargs,
         )
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "CancellationGuide":
+        """Rebuild a guide from a (possibly edited) plain dict, e.g. from the web UI."""
+        allowed = {f.name for f in fields(cls)}
+        clean = {key: value for key, value in data.items() if key in allowed}
+        service_name = (clean.get("serviceName") or "").strip()
+        if not service_name:
+            raise ValueError("serviceName is required.")
+        clean["serviceName"] = service_name
+        clean["normalizedName"] = normalize_name(clean.get("normalizedName") or service_name)
+        clean["category"] = clean.get("category") or "needs_review"
+        clean.setdefault("country", "FR")
+        clean["sourceUrls"] = list(clean.get("sourceUrls") or [])
+        try:
+            clean["confidenceScore"] = round(float(clean.get("confidenceScore", 0.0)), 3)
+        except (TypeError, ValueError):
+            clean["confidenceScore"] = 0.0
+        if clean.get("status") not in VALID_STATUSES:
+            clean["status"] = "needs_review"
+        return cls(**clean)

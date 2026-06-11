@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import io
 import json
 from pathlib import Path
 from urllib.parse import urlparse
@@ -124,22 +125,31 @@ def load_input(path: str | None, examples: bool) -> list[dict]:
     return data
 
 
+def guides_to_json_str(guides: list[CancellationGuide]) -> str:
+    return json.dumps([guide.to_dict() for guide in guides], ensure_ascii=False, indent=2) + "\n"
+
+
+def guides_to_csv_str(guides: list[CancellationGuide]) -> str:
+    rows = [guide.to_dict() for guide in guides]
+    fieldnames = list(rows[0].keys()) if rows else list(CancellationGuide.from_partial("example", "example").to_dict().keys())
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=fieldnames)
+    writer.writeheader()
+    for row in rows:
+        row = dict(row)
+        row["sourceUrls"] = "|".join(row["sourceUrls"])
+        writer.writerow(row)
+    return buffer.getvalue()
+
+
 def write_json(guides: list[CancellationGuide], path: str) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Path(path).write_text(json.dumps([guide.to_dict() for guide in guides], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    Path(path).write_text(guides_to_json_str(guides), encoding="utf-8")
 
 
 def write_csv(guides: list[CancellationGuide], path: str) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    rows = [guide.to_dict() for guide in guides]
-    fieldnames = list(rows[0].keys()) if rows else list(CancellationGuide.from_partial("example", "example").to_dict().keys())
-    with Path(path).open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in rows:
-            row = dict(row)
-            row["sourceUrls"] = "|".join(row["sourceUrls"])
-            writer.writerow(row)
+    Path(path).write_text(guides_to_csv_str(guides), encoding="utf-8", newline="")
 
 
 def main() -> None:
