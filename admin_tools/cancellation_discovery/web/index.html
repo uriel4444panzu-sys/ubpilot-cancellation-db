@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SubPilot — Admin résiliation d'abonnements</title>
+<style>
+  :root {
+    --bg: #0f172a; --panel: #1e293b; --panel-2: #273449; --line: #334155;
+    --text: #e2e8f0; --muted: #94a3b8; --accent: #6366f1; --accent-2: #4f46e5;
+    --ok: #22c55e; --warn: #f59e0b; --bad: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         background: var(--bg); color: var(--text); }
+  header { padding: 18px 24px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  main { padding: 20px 24px 60px; max-width: 1400px; margin: 0 auto; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+          padding: 18px; margin-bottom: 20px; }
+  .card h2 { margin: 0 0 14px; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .step { background: var(--accent); color: #fff; border-radius: 999px; width: 22px; height: 22px;
+          display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+  label { font-size: 13px; color: var(--muted); }
+  .cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px;
+          margin: 4px 0 14px; }
+  .cats label { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13px;
+                background: var(--panel-2); padding: 7px 10px; border-radius: 8px; cursor: pointer; }
+  .controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+  .controls .field { display: flex; flex-direction: column; gap: 4px; }
+  input[type="number"], input[type="text"] {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--text);
+    padding: 8px 10px; border-radius: 8px; font-size: 13px; }
+  button { background: var(--accent); color: #fff; border: none; padding: 9px 16px;
+           border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 600; }
+  button:hover { background: var(--accent-2); }
+  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); font-weight: 500; }
+  button.ghost:hover { background: var(--panel-2); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .row-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+  .muted { color: var(--muted); font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; position: sticky; top: 0; background: var(--panel); }
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  td input, td select, td textarea {
+    width: 100%; min-width: 130px; background: var(--panel-2); border: 1px solid var(--line);
+    color: var(--text); border-radius: 6px; padding: 5px 6px; font-size: 12px; font-family: inherit; }
+  td textarea { min-height: 34px; resize: vertical; }
+  .status-verified { color: var(--ok); font-weight: 700; }
+  .status-needs_review { color: var(--warn); font-weight: 700; }
+  .status-not_found { color: var(--bad); font-weight: 700; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+          background: var(--panel-2); }
+  .toast { position: fixed; bottom: 18px; right: 18px; background: var(--panel-2);
+           border: 1px solid var(--line); padding: 12px 16px; border-radius: 10px; font-size: 13px;
+           max-width: 360px; opacity: 0; transform: translateY(8px); transition: .2s; }
+  .toast.show { opacity: 1; transform: none; }
+  .toast.err { border-color: var(--bad); }
+  .summary { display: flex; gap: 16px; flex-wrap: wrap; margin: 0 0 12px; font-size: 13px; }
+  a { color: #93c5fd; }
+  .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #fff;
+          border-top-color: transparent; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -2px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>SubPilot — Console admin résiliation d'abonnements</h1>
+  <p>Découverte, vérification et révision des liens publics officiels. Aucun login, captcha ou paywall n'est contourné.</p>
+</header>
+<main>
+
+  <section class="card">
+    <h2><span class="step">1</span> Découverte par catégorie</h2>
+    <label>Catégories à explorer</label>
+    <div class="cats" id="cats"></div>
+    <div class="controls">
+      <div class="field">
+        <label for="limit">Résultats max / requête</label>
+        <input type="number" id="limit" value="8" min="1" max="30" style="width:90px" />
+      </div>
+      <div class="field">
+        <label><input type="checkbox" id="seeds" checked /> Inclure les services connus (seeds)</label>
+      </div>
+      <button id="btn-discover">Lancer la découverte</button>
+      <button class="ghost" id="btn-select-all">Tout cocher</button>
+      <button class="ghost" id="btn-select-none">Tout décocher</button>
+    </div>
+    <p class="muted" style="margin-top:10px">Astuce : la découverte renvoie des candidats en <span class="status-needs_review">needs_review</span>. Passe à l'étape 2 pour récupérer les liens officiels.</p>
+  </section>
+
+  <section class="card">
+    <h2><span class="step">2</span> Vérification & révision</h2>
+    <div class="summary" id="summary"><span class="muted">Aucun résultat pour l'instant.</span></div>
+    <div class="row-actions">
+      <button id="btn-verify-all">Vérifier les liens (tous)</button>
+      <button class="ghost" id="btn-add">+ Ajouter un service</button>
+      <button class="ghost" id="btn-clear">Vider le tableau</button>
+    </div>
+    <div class="tbl-wrap" style="margin-top:12px">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Service</th><th>Catégorie</th><th>Statut</th><th>Confiance</th>
+            <th>Site officiel</th><th>Connexion</th><th>Gérer abo.</th><th>Résiliation</th>
+            <th>Aide</th><th>Notes</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2><span class="step">3</span> Export & Firestore</h2>
+    <div class="row-actions">
+      <button class="ghost" id="btn-json">Télécharger JSON</button>
+      <button class="ghost" id="btn-csv">Télécharger CSV</button>
+    </div>
+    <div class="controls" style="margin-top:14px">
+      <div class="field">
+        <label for="project">ID projet Google Cloud (optionnel)</label>
+        <input type="text" id="project" placeholder="mon-projet-gcp" style="min-width:220px" />
+      </div>
+      <button id="btn-firestore">Écrire dans Firestore</button>
+    </div>
+    <p class="muted" style="margin-top:10px">L'écriture Firestore nécessite <code>google-cloud-firestore</code> et des identifiants (ADC ou GOOGLE_APPLICATION_CREDENTIALS). Upsert dans la collection <code>cancellationGuides</code> (id = normalizedName).</p>
+  </section>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const FIELDS = ["officialWebsite","loginUrl","manageSubscriptionUrl","cancellationUrl","helpUrl"];
+let guides = [];
+let categories = [];
+
+function toast(msg, isErr=false) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isErr ? " err" : "");
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.className = "toast"; }, 4000);
+}
+
+async function api(path, body) {
+  const res = await fetch(path, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || ("HTTP " + res.status));
+  return data;
+}
+
+function busy(btn, on, label) {
+  if (on) { btn._label = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span> ' + (label || "..."); }
+  else { btn.disabled = false; btn.innerHTML = btn._label; }
+}
+
+async function loadCategories() {
+  const res = await fetch("/api/categories");
+  categories = (await res.json()).categories;
+  const box = document.getElementById("cats");
+  box.innerHTML = categories.map(c =>
+    `<label><input type="checkbox" class="cat" value="${c.key}"> ${c.label}</label>`).join("");
+}
+
+function selectedCategories() {
+  return [...document.querySelectorAll(".cat:checked")].map(c => c.value);
+}
+
+function escapeHtml(s) { return (s||"").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+function renderSummary() {
+  const el = document.getElementById("summary");
+  if (!guides.length) { el.innerHTML = '<span class="muted">Aucun résultat pour l\'instant.</span>'; return; }
+  const c = { verified:0, needs_review:0, not_found:0 };
+  guides.forEach(g => { c[g.status] = (c[g.status]||0) + 1; });
+  el.innerHTML =
+    `<span class="pill">${guides.length} services</span>` +
+    `<span class="status-verified">✔ verified : ${c.verified}</span>` +
+    `<span class="status-needs_review">● needs_review : ${c.needs_review}</span>` +
+    `<span class="status-not_found">✘ not_found : ${c.not_found}</span>`;
+}
+
+function linkCell(idx, field) {
+  const v = guides[idx][field] || "";
+  const open = v ? `<a href="${escapeHtml(v)}" target="_blank" rel="noopener">↗</a>` : "";
+  return `<div style="display:flex;gap:4px;align-items:center">
+            <input type="text" value="${escapeHtml(v)}" data-i="${idx}" data-f="${field}" class="cell-link">${open}
+          </div>`;
+}
+
+function render() {
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = guides.map((g, i) => `
+    <tr>
+      <td><input type="text" value="${escapeHtml(g.serviceName)}" data-i="${i}" data-f="serviceName" class="cell"></td>
+      <td><input type="text" value="${escapeHtml(g.category)}" data-i="${i}" data-f="category" class="cell"></td>
+      <td>
+        <select data-i="${i}" data-f="status" class="cell status-${g.status}">
+          <option value="verified" ${g.status==="verified"?"selected":""}>verified</option>
+          <option value="needs_review" ${g.status==="needs_review"?"selected":""}>needs_review</option>
+          <option value="not_found" ${g.status==="not_found"?"selected":""}>not_found</option>
+        </select>
+      </td>
+      <td style="text-align:center">${Number(g.confidenceScore).toFixed(2)}</td>
+      <td>${linkCell(i,"officialWebsite")}</td>
+      <td>${linkCell(i,"loginUrl")}</td>
+      <td>${linkCell(i,"manageSubscriptionUrl")}</td>
+      <td>${linkCell(i,"cancellationUrl")}</td>
+      <td>${linkCell(i,"helpUrl")}</td>
+      <td><textarea data-i="${i}" data-f="notes" class="cell">${escapeHtml(g.notes)}</textarea></td>
+      <td style="white-space:nowrap">
+        <button class="ghost btn-verify-one" data-i="${i}" style="padding:5px 9px">Vérifier</button>
+        <button class="ghost btn-del" data-i="${i}" style="padding:5px 9px">✕</button>
+      </td>
+    </tr>`).join("");
+  renderSummary();
+}
+
+// Edits flow back into the model
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.classList.contains("cell") || t.classList.contains("cell-link")) {
+    const i = +t.dataset.i, f = t.dataset.f;
+    guides[i][f] = t.value;
+    if (f === "status") { t.className = "cell status-" + t.value; renderSummary(); }
+  }
+});
+
+document.addEventListener("click", async e => {
+  const t = e.target.closest("button");
+  if (!t) return;
+  if (t.classList.contains("btn-del")) { guides.splice(+t.dataset.i, 1); render(); }
+  if (t.classList.contains("btn-verify-one")) { await verify([+t.dataset.i], t); }
+});
+
+async function verify(indices, btn) {
+  const services = indices.map(i => ({
+    serviceName: guides[i].serviceName, category: guides[i].category, officialWebsite: guides[i].officialWebsite
+  }));
+  busy(btn, true, "Vérification");
+  try {
+    const data = await api("/api/verify", { services });
+    data.guides.forEach((g, k) => { guides[indices[k]] = g; });
+    render();
+    toast("Vérification terminée (" + data.guides.length + ").");
+  } catch (err) { toast("Erreur : " + err.message, true); }
+  finally { busy(btn, false); }
+}
+
+function download(name, content, type) {
+  const blob = new Blob([content], { type });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// --- buttons ---
+document.getElementById("btn-select-all").onclick = () => document.querySelectorAll(".cat").forEach(c => c.checked = true);
+document.getElementById("btn-select-none").onclick = () => document.querySelectorAll(".cat").forEach(c => c.checked = false);
+
+document.getElementById("btn-discover").onclick = async (e) => {
+  const cats = selectedCategories();
+  if (!cats.length) { toast("Coche au moins une catégorie.", true); return; }
+  const btn = e.target;
+  busy(btn, true, "Découverte");
+  try {
+    const data = await api("/api/discover", {
+      categories: cats,
+      limitPerQuery: +document.getElementById("limit").value,
+      includeSeeds: document.getElementById("seeds").checked
+    });
+    guides = data.guides;
+    render();
+    toast(guides.length + " services découverts.");
+  } catch (err) { toast("Erreur : " + err.message, true); }
+  finally { busy(btn, false); }
+};
+
+document.getElementById("btn-verify-all").onclick = async (e) => {
+  if (!guides.length) { toast("Rien à vérifier.", true); return; }
+  await verify(guides.map((_, i) => i), e.target);
+};
+
+document.getElementById("btn-add").onclick = () => {
+  guides.push({ serviceName:"Nouveau service", normalizedName:"", category:"needs_review", country:"FR",
+    officialWebsite:"", loginUrl:"", manageSubscriptionUrl:"", cancellationUrl:"", helpUrl:"",
+    sourceUrls:[], confidenceScore:0, status:"needs_review", lastCheckedAt:"", notes:"" });
+  render();
+};
+
+document.getElementById("btn-clear").onclick = () => { guides = []; render(); };
+
+document.getElementById("btn-json").onclick = async () => {
+  if (!guides.length) { toast("Rien à exporter.", true); return; }
+  try { const d = await api("/api/export", { guides, format:"json" });
+    download("cancellation-guides.json", d.content, "application/json"); toast("JSON exporté."); }
+  catch (err) { toast("Erreur : " + err.message, true); }
+};
+
+document.getElementById("btn-csv").onclick = async () => {
+  if (!guides.length) { toast("Rien à exporter.", true); return; }
+  try { const d = await api("/api/export", { guides, format:"csv" });
+    download("cancellation-guides.csv", d.content, "text/csv"); toast("CSV exporté."); }
+  catch (err) { toast("Erreur : " + err.message, true); }
+};
+
+document.getElementById("btn-firestore").onclick = async (e) => {
+  if (!guides.length) { toast("Rien à écrire.", true); return; }
+  if (!confirm("Écrire " + guides.length + " guide(s) dans Firestore (collection cancellationGuides) ?")) return;
+  const btn = e.target;
+  busy(btn, true, "Écriture");
+  try { const d = await api("/api/firestore", { guides, projectId: document.getElementById("project").value.trim() });
+    toast(d.written + " guide(s) écrit(s) dans Firestore."); }
+  catch (err) { toast("Erreur Firestore : " + err.message, true); }
+  finally { busy(btn, false); }
+};
+
+loadCategories();
+render();
+</script>
+</body>
+</html>
