@@ -1,0 +1,8 @@
+[
+  {"serviceName": "Netflix", "category": "streaming vidéo"},
+  {"serviceName": "Spotify", "category": "musique"},
+  {"serviceName": "Disney+", "category": "streaming vidéo"},
+  {"serviceName": "Basic-Fit", "category": "sport / salles de sport"},
+  {"serviceName": "Orange", "category": "téléphonie / internet"},
+  {"serviceName": "Adobe", "category": "logiciels / SaaS"}
+]
