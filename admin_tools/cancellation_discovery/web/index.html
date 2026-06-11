@@ -129,6 +129,27 @@
     <p class="muted" style="margin-top:10px">L'écriture Firestore nécessite <code>google-cloud-firestore</code> et des identifiants (ADC ou GOOGLE_APPLICATION_CREDENTIALS). Upsert dans la collection <code>cancellationGuides</code> (id = normalizedName).</p>
   </section>
 
+  <section class="card">
+    <h2><span class="step">4</span> Voir le contenu Firestore</h2>
+    <p class="muted" style="margin:0 0 12px">Lit la collection <code>cancellationGuides</code> telle qu'elle est actuellement stockée, pour vérifier sans passer par la console Google. Utilise l'ID projet saisi à l'étape 3.</p>
+    <div class="row-actions">
+      <button id="btn-fs-load">Charger le contenu Firestore</button>
+      <button class="ghost" id="btn-fs-to-table" disabled>Copier dans le tableau d'édition</button>
+      <span class="muted" id="fs-status"></span>
+    </div>
+    <div class="tbl-wrap" style="margin-top:12px">
+      <table id="fs-tbl">
+        <thead>
+          <tr>
+            <th>Doc id</th><th>Service</th><th>Catégorie</th><th>Statut</th><th>Confiance</th>
+            <th>Résiliation</th><th>Gérer abo.</th><th>Aide</th><th>Vérifié le</th>
+          </tr>
+        </thead>
+        <tbody id="fs-tbody"><tr><td colspan="9" class="muted">Non chargé.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
 </main>
 <div class="toast" id="toast"></div>
 
@@ -316,6 +337,62 @@ document.getElementById("btn-firestore").onclick = async (e) => {
     toast(d.written + " guide(s) écrit(s) dans Firestore."); }
   catch (err) { toast("Erreur Firestore : " + err.message, true); }
   finally { busy(btn, false); }
+};
+
+// --- Firestore read (section 4) ---
+let fsDocs = [];
+
+function fsLink(url) {
+  const v = url || "";
+  return v ? `<a href="${escapeHtml(v)}" target="_blank" rel="noopener">${escapeHtml(v.length > 40 ? v.slice(0,40)+"…" : v)}</a>` : '<span class="muted">—</span>';
+}
+
+function renderFs() {
+  const tb = document.getElementById("fs-tbody");
+  if (!fsDocs.length) { tb.innerHTML = '<tr><td colspan="9" class="muted">Aucun document.</td></tr>'; return; }
+  tb.innerHTML = fsDocs.map(g => `
+    <tr>
+      <td><code>${escapeHtml(g.documentId || g.normalizedName || "")}</code></td>
+      <td>${escapeHtml(g.serviceName || "")}</td>
+      <td>${escapeHtml(g.category || "")}</td>
+      <td class="status-${g.status || ""}">${escapeHtml(g.status || "")}</td>
+      <td style="text-align:center">${g.confidenceScore != null ? Number(g.confidenceScore).toFixed(2) : ""}</td>
+      <td>${fsLink(g.cancellationUrl)}</td>
+      <td>${fsLink(g.manageSubscriptionUrl)}</td>
+      <td>${fsLink(g.helpUrl)}</td>
+      <td class="muted">${escapeHtml((g.lastCheckedAt || "").slice(0,10))}</td>
+    </tr>`).join("");
+}
+
+document.getElementById("btn-fs-load").onclick = async (e) => {
+  const btn = e.target;
+  busy(btn, true, "Lecture");
+  document.getElementById("fs-status").textContent = "";
+  try {
+    const d = await api("/api/firestore-list", { projectId: document.getElementById("project").value.trim() });
+    fsDocs = d.guides;
+    renderFs();
+    document.getElementById("fs-status").textContent = d.count + " document(s) dans cancellationGuides.";
+    document.getElementById("btn-fs-to-table").disabled = !fsDocs.length;
+  } catch (err) {
+    document.getElementById("fs-status").textContent = "Erreur : " + err.message;
+    toast("Erreur Firestore : " + err.message, true);
+  } finally { busy(btn, false); }
+};
+
+document.getElementById("btn-fs-to-table").onclick = () => {
+  if (!fsDocs.length) return;
+  guides = fsDocs.map(d => ({
+    serviceName: d.serviceName || "", normalizedName: d.normalizedName || d.documentId || "",
+    category: d.category || "needs_review", country: d.country || "FR",
+    officialWebsite: d.officialWebsite || "", loginUrl: d.loginUrl || "",
+    manageSubscriptionUrl: d.manageSubscriptionUrl || "", cancellationUrl: d.cancellationUrl || "",
+    helpUrl: d.helpUrl || "", sourceUrls: d.sourceUrls || [],
+    confidenceScore: d.confidenceScore || 0, status: d.status || "needs_review",
+    lastCheckedAt: d.lastCheckedAt || "", notes: d.notes || ""
+  }));
+  render();
+  toast(guides.length + " document(s) copié(s) dans le tableau d'édition.");
 };
 
 loadCategories();

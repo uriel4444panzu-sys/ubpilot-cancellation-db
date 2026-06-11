@@ -59,6 +59,9 @@ Le navigateur s'ouvre sur `http://127.0.0.1:8000/`. La page regroupe tout le wor
    `not_found` à la main.
 3. **Export & Firestore** — télécharge le résultat en JSON ou CSV, ou écris-le dans la collection
    Firestore `cancellationGuides`.
+4. **Voir le contenu Firestore** — lit la collection `cancellationGuides` telle qu'elle est stockée
+   pour vérifier le contenu sans passer par la console Google. Bouton « Copier dans le tableau
+   d'édition » pour réviser/re-vérifier des documents existants.
 
 Options du serveur :
 
@@ -145,6 +148,18 @@ python scripts/verify_cancellation_links.py --input examples/discovered-services
 ```
 
 L'écriture est un upsert dans la collection `cancellationGuides`, avec `normalizedName` comme identifiant de document.
+
+## Lecture / vérification Firestore
+
+Pour vérifier ce qui est réellement stocké, sans passer par la console Google :
+
+```bash
+python scripts/read_firestore.py --project-id <gcp-project-id>
+python scripts/read_firestore.py --project-id <gcp-project-id> --json
+```
+
+La même lecture est disponible dans l'interface web (section « Voir le contenu Firestore »).
+La lecture nécessite les mêmes identifiants que l'écriture.
 
 ## Workflow recommandé
 

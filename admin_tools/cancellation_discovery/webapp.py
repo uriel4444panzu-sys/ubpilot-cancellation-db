@@ -76,6 +76,7 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
                 "/api/verify": self._handle_verify,
                 "/api/export": self._handle_export,
                 "/api/firestore": self._handle_firestore,
+                "/api/firestore-list": self._handle_firestore_list,
             }.get(self.path)
             if handler is None:
                 self._send(404, b"Not found", "text/plain; charset=utf-8")
@@ -129,6 +130,12 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
 
         write_guides(guides, project_id=data.get("projectId") or None)
         self._send_json({"written": len(guides)})
+
+    def _handle_firestore_list(self, data: dict) -> None:
+        from .firestore_writer import read_guides
+
+        documents = read_guides(project_id=data.get("projectId") or None)
+        self._send_json({"guides": documents, "count": len(documents)})
 
 
 def run(host: str = "127.0.0.1", port: int = 8000, open_browser: bool = True) -> None:
