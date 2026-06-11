@@ -42,6 +42,9 @@ pip install -r requirements.txt
 
 `google-cloud-firestore` n'est requis que pour l'écriture Firestore. La découverte, la vérification et les exports JSON/CSV utilisent la bibliothèque standard Python.
 
+Pour relier l'outil à la base SubPilot (`subpilot-bd743`), suis le guide
+[`docs/firestore-authentification.md`](firestore-authentification.md) (compte de service + clé JSON).
+
 ## Interface web (sans ligne de commande)
 
 Si tu préfères travailler dans une vraie interface, lance le serveur local :
