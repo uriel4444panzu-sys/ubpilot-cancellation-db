@@ -1,0 +1,134 @@
+[
+  {
+    "serviceName": "Netflix",
+    "normalizedName": "netflix",
+    "category": "streaming vidéo",
+    "country": "FR",
+    "officialWebsite": "https://www.netflix.com/fr/",
+    "loginUrl": "https://www.netflix.com/login",
+    "manageSubscriptionUrl": "https://www.netflix.com/YourAccount",
+    "cancellationUrl": "https://help.netflix.com/en/node/407",
+    "helpUrl": "https://help.netflix.com/",
+    "sourceUrls": [
+      "https://help.netflix.com/",
+      "https://help.netflix.com/en/node/407",
+      "https://www.netflix.com/YourAccount",
+      "https://www.netflix.com/fr/",
+      "https://www.netflix.com/login"
+    ],
+    "confidenceScore": 0.98,
+    "status": "verified",
+    "lastCheckedAt": "2026-06-11T23:23:48.561536+00:00",
+    "notes": "Verified from public search results only; no login, captcha, paywall, or protected flow was accessed. Curated official example; Netflix cancellation help says account management may require sign-in."
+  },
+  {
+    "serviceName": "Spotify",
+    "normalizedName": "spotify",
+    "category": "musique",
+    "country": "FR",
+    "officialWebsite": "https://www.spotify.com/fr/",
+    "loginUrl": "https://accounts.spotify.com/",
+    "manageSubscriptionUrl": "https://www.spotify.com/account/subscription/",
+    "cancellationUrl": "https://support.spotify.com/fr/article/cancel-premium/",
+    "helpUrl": "https://support.spotify.com/",
+    "sourceUrls": [
+      "https://accounts.spotify.com/",
+      "https://support.spotify.com/",
+      "https://support.spotify.com/fr/article/cancel-premium/",
+      "https://www.spotify.com/account/subscription/",
+      "https://www.spotify.com/fr/"
+    ],
+    "confidenceScore": 0.98,
+    "status": "verified",
+    "lastCheckedAt": "2026-06-11T23:23:48.561623+00:00",
+    "notes": "Verified from public search results only; no login, captcha, paywall, or protected flow was accessed. Curated official example for Spotify Premium cancellation support."
+  },
+  {
+    "serviceName": "Disney+",
+    "normalizedName": "disney",
+    "category": "streaming vidéo",
+    "country": "FR",
+    "officialWebsite": "https://www.disneyplus.com/fr-fr",
+    "loginUrl": "https://www.disneyplus.com/login",
+    "manageSubscriptionUrl": "https://www.disneyplus.com/account",
+    "cancellationUrl": "https://help.disneyplus.com/article/disneyplus-en-us-cancel",
+    "helpUrl": "https://help.disneyplus.com/",
+    "sourceUrls": [
+      "https://help.disneyplus.com/",
+      "https://help.disneyplus.com/article/disneyplus-en-us-cancel",
+      "https://www.disneyplus.com/account",
+      "https://www.disneyplus.com/fr-fr",
+      "https://www.disneyplus.com/login"
+    ],
+    "confidenceScore": 0.98,
+    "status": "verified",
+    "lastCheckedAt": "2026-06-11T23:23:48.561693+00:00",
+    "notes": "Verified from public search results only; no login, captcha, paywall, or protected flow was accessed. Curated official example; third-party billed Disney+ subscriptions can require the billing partner."
+  },
+  {
+    "serviceName": "Basic-Fit",
+    "normalizedName": "basic-fit",
+    "category": "sport / salles de sport",
+    "country": "FR",
+    "officialWebsite": "https://www.basic-fit.com/fr-fr",
+    "loginUrl": "https://my.basic-fit.com/login",
+    "manageSubscriptionUrl": "https://my.basic-fit.com/",
+    "cancellationUrl": "https://www.basic-fit.com/fr-fr/resilier/cancel-membership.html",
+    "helpUrl": "https://support.basic-fit.com/",
+    "sourceUrls": [
+      "https://my.basic-fit.com/",
+      "https://my.basic-fit.com/login",
+      "https://support.basic-fit.com/",
+      "https://www.basic-fit.com/fr-fr",
+      "https://www.basic-fit.com/fr-fr/resilier/cancel-membership.html"
+    ],
+    "confidenceScore": 0.98,
+    "status": "verified",
+    "lastCheckedAt": "2026-06-11T23:23:48.561756+00:00",
+    "notes": "Verified from public search results only; no login, captcha, paywall, or protected flow was accessed. Curated official France example for Basic-Fit cancellation information."
+  },
+  {
+    "serviceName": "Orange",
+    "normalizedName": "orange",
+    "category": "téléphonie / internet",
+    "country": "FR",
+    "officialWebsite": "https://www.orange.fr/",
+    "loginUrl": "https://login.orange.fr/",
+    "manageSubscriptionUrl": "https://espace-client.orange.fr/",
+    "cancellationUrl": "https://assistance.orange.fr/article/resilier-les-etapes-pour-l-offre-internet_33762",
+    "helpUrl": "https://assistance.orange.fr/",
+    "sourceUrls": [
+      "https://assistance.orange.fr/",
+      "https://assistance.orange.fr/article/resilier-les-etapes-pour-l-offre-internet_33762",
+      "https://espace-client.orange.fr/",
+      "https://login.orange.fr/",
+      "https://www.orange.fr/"
+    ],
+    "confidenceScore": 0.98,
+    "status": "verified",
+    "lastCheckedAt": "2026-06-11T23:23:48.561817+00:00",
+    "notes": "Verified from public search results only; no login, captcha, paywall, or protected flow was accessed. Curated official France example for Orange customer-area cancellation guidance."
+  },
+  {
+    "serviceName": "Adobe",
+    "normalizedName": "adobe",
+    "category": "logiciels / SaaS",
+    "country": "FR",
+    "officialWebsite": "https://www.adobe.com/fr/",
+    "loginUrl": "https://auth.services.adobe.com/",
+    "manageSubscriptionUrl": "https://account.adobe.com/plans",
+    "cancellationUrl": "https://helpx.adobe.com/manage-account/using/cancel-subscription.html",
+    "helpUrl": "https://helpx.adobe.com/fr/support.html",
+    "sourceUrls": [
+      "https://account.adobe.com/plans",
+      "https://auth.services.adobe.com/",
+      "https://helpx.adobe.com/fr/support.html",
+      "https://helpx.adobe.com/manage-account/using/cancel-subscription.html",
+      "https://www.adobe.com/fr/"
+    ],
+    "confidenceScore": 0.98,
+    "status": "verified",
+    "lastCheckedAt": "2026-06-11T23:23:48.561904+00:00",
+    "notes": "Verified from public search results only; no login, captcha, paywall, or protected flow was accessed. Curated official example for Adobe account plan cancellation."
+  }
+]
