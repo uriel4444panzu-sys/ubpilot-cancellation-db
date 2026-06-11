@@ -161,6 +161,25 @@ python scripts/read_firestore.py --project-id <gcp-project-id> --json
 La même lecture est disponible dans l'interface web (section « Voir le contenu Firestore »).
 La lecture nécessite les mêmes identifiants que l'écriture.
 
+Le projet utilisé est **`subpilot-bd743`** (le projet Firebase de SubPilot, pour que l'application
+lise bien les données). L'interface web préremplit cet ID dans le champ « ID projet ».
+
+## Règles de sécurité Firestore
+
+Le fichier [`firestore.rules`](../firestore.rules) protège la collection `cancellationGuides` côté
+client : lecture limitée aux guides `status == "verified"` (les admins voient tout via le custom
+claim `admin`), écriture interdite depuis un client. L'outil admin écrit via l'Admin SDK (compte
+de service), qui contourne ces règles.
+
+Déploiement (depuis un dossier configuré avec la Firebase CLI) :
+
+```bash
+firebase deploy --only firestore:rules --project subpilot-bd743
+```
+
+Conserve/fusionne tes autres règles SubPilot existantes : ce fichier ne couvre que
+`cancellationGuides`.
+
 ## Workflow recommandé
 
 1. Lancer la découverte sur une catégorie ou toutes les catégories.
