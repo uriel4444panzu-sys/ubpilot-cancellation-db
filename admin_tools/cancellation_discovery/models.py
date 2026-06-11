@@ -65,7 +65,10 @@ class CancellationGuide:
         if not service_name:
             raise ValueError("serviceName is required.")
         clean["serviceName"] = service_name
-        clean["normalizedName"] = normalize_name(clean.get("normalizedName") or service_name)
+        # normalizedName is the stable Firestore document id and is not editable in the UI,
+        # so always derive it from the (possibly edited) serviceName to avoid writing a
+        # renamed service under a stale document id.
+        clean["normalizedName"] = normalize_name(service_name)
         clean["category"] = clean.get("category") or "needs_review"
         clean.setdefault("country", "FR")
         clean["sourceUrls"] = list(clean.get("sourceUrls") or [])
