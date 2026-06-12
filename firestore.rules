@@ -1,0 +1,37 @@
+rules_version = '2';
+
+// Règles de sécurité Firestore pour le projet SubPilot (subpilot-bd743).
+//
+// Important : l'outil admin de découverte/résiliation écrit via l'Admin SDK
+// (google-cloud-firestore avec un compte de service). L'Admin SDK CONTOURNE
+// totalement ces règles. Elles protègent donc uniquement les accès des clients
+// (application SubPilot, navigateurs, utilisateurs).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      // Administrateurs identifiés par un custom claim `admin == true`.
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    // Guides de gestion / résiliation d'abonnements.
+    match /cancellationGuides/{guideId} {
+
+      // Lecture : l'application ne voit que les guides validés.
+      // Pour lister, la requête cliente doit filtrer sur status == "verified"
+      // (ex. where("status", "==", "verified")). Les admins voient tout.
+      allow read: if isAdmin()
+                  || resource.data.status == 'verified';
+
+      // Écriture interdite depuis un client. Seul l'outil admin écrit, via
+      // l'Admin SDK (compte de service) qui n'est pas soumis à ces règles.
+      // Un administrateur authentifié avec le claim admin peut aussi écrire.
+      allow write: if isAdmin();
+    }
+
+    // Tout le reste : aucune règle implicite ici. Ce fichier ne couvre que
+    // la collection cancellationGuides ; conserve/fusionne tes autres règles
+    // SubPilot existantes lors du déploiement.
+  }
+}

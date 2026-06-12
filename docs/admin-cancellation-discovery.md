@@ -42,6 +42,9 @@ pip install -r requirements.txt
 
 `google-cloud-firestore` n'est requis que pour l'écriture Firestore. La découverte, la vérification et les exports JSON/CSV utilisent la bibliothèque standard Python.
 
+Pour relier l'outil à la base SubPilot (`subpilot-bd743`), suis le guide
+[`docs/firestore-authentification.md`](firestore-authentification.md) (compte de service + clé JSON).
+
 ## Interface web (sans ligne de commande)
 
 Si tu préfères travailler dans une vraie interface, lance le serveur local :
@@ -59,6 +62,9 @@ Le navigateur s'ouvre sur `http://127.0.0.1:8000/`. La page regroupe tout le wor
    `not_found` à la main.
 3. **Export & Firestore** — télécharge le résultat en JSON ou CSV, ou écris-le dans la collection
    Firestore `cancellationGuides`.
+4. **Voir le contenu Firestore** — lit la collection `cancellationGuides` telle qu'elle est stockée
+   pour vérifier le contenu sans passer par la console Google. Bouton « Copier dans le tableau
+   d'édition » pour réviser/re-vérifier des documents existants.
 
 Options du serveur :
 
@@ -145,6 +151,37 @@ python scripts/verify_cancellation_links.py --input examples/discovered-services
 ```
 
 L'écriture est un upsert dans la collection `cancellationGuides`, avec `normalizedName` comme identifiant de document.
+
+## Lecture / vérification Firestore
+
+Pour vérifier ce qui est réellement stocké, sans passer par la console Google :
+
+```bash
+python scripts/read_firestore.py --project-id <gcp-project-id>
+python scripts/read_firestore.py --project-id <gcp-project-id> --json
+```
+
+La même lecture est disponible dans l'interface web (section « Voir le contenu Firestore »).
+La lecture nécessite les mêmes identifiants que l'écriture.
+
+Le projet utilisé est **`subpilot-bd743`** (le projet Firebase de SubPilot, pour que l'application
+lise bien les données). L'interface web préremplit cet ID dans le champ « ID projet ».
+
+## Règles de sécurité Firestore
+
+Le fichier [`firestore.rules`](../firestore.rules) protège la collection `cancellationGuides` côté
+client : lecture limitée aux guides `status == "verified"` (les admins voient tout via le custom
+claim `admin`), écriture interdite depuis un client. L'outil admin écrit via l'Admin SDK (compte
+de service), qui contourne ces règles.
+
+Déploiement (depuis un dossier configuré avec la Firebase CLI) :
+
+```bash
+firebase deploy --only firestore:rules --project subpilot-bd743
+```
+
+Conserve/fusionne tes autres règles SubPilot existantes : ce fichier ne couvre que
+`cancellationGuides`.
 
 ## Workflow recommandé
 

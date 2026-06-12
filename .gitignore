@@ -2,3 +2,11 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
+
+# Identifiants Google — NE JAMAIS committer une clé de compte de service
+secrets/
+*service-account*.json
+*serviceaccount*.json
+*-sa-key*.json
+gcp-key*.json
+application_default_credentials.json
