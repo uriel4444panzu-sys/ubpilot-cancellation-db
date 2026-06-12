@@ -173,6 +173,36 @@ def search_web(query: str, limit: int = 10, pause_seconds: float = 1.0) -> list[
     return unique[:limit]
 
 
+def official_website_from_wikidata(name: str) -> str:
+    """Resolve a brand's official website via the public Wikidata API (property P856).
+
+    This is more reliable than scraping a search engine for the home page and is not blocked by
+    bot protection. Returns "" on any failure so callers can fall back to search or manual entry.
+    """
+    if not name.strip():
+        return ""
+    try:
+        search_url = "https://www.wikidata.org/w/api.php?" + urlencode(
+            {"action": "wbsearchentities", "search": name, "language": "fr",
+             "uselang": "fr", "format": "json", "type": "item", "limit": "1"}
+        )
+        hits = json.loads(_http(search_url)).get("search", [])
+        if not hits:
+            return ""
+        entity_id = hits[0]["id"]
+        claims_url = "https://www.wikidata.org/w/api.php?" + urlencode(
+            {"action": "wbgetentities", "ids": entity_id, "props": "claims", "format": "json"}
+        )
+        entity = json.loads(_http(claims_url)).get("entities", {}).get(entity_id, {})
+        for claim in entity.get("claims", {}).get("P856", []):
+            value = claim.get("mainsnak", {}).get("datavalue", {}).get("value")
+            if isinstance(value, str) and value.startswith(("http://", "https://")):
+                return value
+    except Exception:
+        return ""
+    return ""
+
+
 def extract_json_ld_names(html: str) -> list[str]:
     names: list[str] = []
     for match in re.finditer(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>', html, re.I | re.S):

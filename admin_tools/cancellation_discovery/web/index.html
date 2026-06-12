@@ -48,6 +48,8 @@
     width: 100%; min-width: 130px; background: var(--panel-2); border: 1px solid var(--line);
     color: var(--text); border-radius: 6px; padding: 5px 6px; font-size: 12px; font-family: inherit; }
   td textarea { min-height: 34px; resize: vertical; }
+  .manual-row td { background: rgba(34, 197, 94, .07); }
+  .manual-lbl { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--ok); margin-right: 6px; }
   .status-verified { color: var(--ok); font-weight: 700; }
   .status-needs_review { color: var(--warn); font-weight: 700; }
   .status-not_found { color: var(--bad); font-weight: 700; }
@@ -215,8 +217,8 @@ function linkCell(idx, field) {
 function render() {
   const tb = document.getElementById("tbody");
   tb.innerHTML = guides.map((g, i) => `
-    <tr>
-      <td><input type="text" value="${escapeHtml(g.serviceName)}" data-i="${i}" data-f="serviceName" class="cell"></td>
+    <tr class="${g.verifiedManually ? 'manual-row' : ''}">
+      <td><input type="text" value="${escapeHtml(g.serviceName)}" data-i="${i}" data-f="serviceName" class="cell">${g.verifiedManually ? ' 🔒' : ''}</td>
       <td><input type="text" value="${escapeHtml(g.category)}" data-i="${i}" data-f="category" class="cell"></td>
       <td>
         <select data-i="${i}" data-f="status" class="cell status-${g.status}">
@@ -233,7 +235,10 @@ function render() {
       <td>${linkCell(i,"helpUrl")}</td>
       <td><textarea data-i="${i}" data-f="notes" class="cell">${escapeHtml(g.notes)}</textarea></td>
       <td style="white-space:nowrap">
-        <button class="ghost btn-verify-one" data-i="${i}" style="padding:5px 9px">Vérifier</button>
+        <label class="manual-lbl" title="Certifié manuellement : la vérification automatique ne touchera plus cette ligne">
+          <input type="checkbox" class="cell-manual" data-i="${i}" ${g.verifiedManually ? "checked" : ""}> Manuel
+        </label>
+        <button class="ghost btn-verify-one" data-i="${i}" style="padding:5px 9px" ${g.verifiedManually ? "disabled" : ""}>Vérifier</button>
         <button class="ghost btn-del" data-i="${i}" style="padding:5px 9px">✕</button>
       </td>
     </tr>`).join("");
@@ -250,6 +255,17 @@ document.addEventListener("input", e => {
   }
 });
 
+// "Certifié manuellement" toggle: lock the row against auto-verification and mark it verified.
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.classList.contains("cell-manual")) {
+    const i = +t.dataset.i;
+    guides[i].verifiedManually = t.checked;
+    if (t.checked) guides[i].status = "verified";
+    render();
+  }
+});
+
 document.addEventListener("click", async e => {
   const t = e.target.closest("button");
   if (!t) return;
@@ -258,15 +274,22 @@ document.addEventListener("click", async e => {
 });
 
 async function verify(indices, btn) {
-  const services = indices.map(i => ({
-    serviceName: guides[i].serviceName, category: guides[i].category, officialWebsite: guides[i].officialWebsite
+  // Skip rows certified manually: they must never be re-searched or overwritten.
+  const targets = indices.filter(i => !guides[i].verifiedManually);
+  const skipped = indices.length - targets.length;
+  if (!targets.length) { toast(skipped + " ligne(s) certifiée(s) manuellement : non re-vérifiée(s)."); return; }
+  const services = targets.map(i => ({
+    serviceName: guides[i].serviceName, category: guides[i].category,
+    officialWebsite: guides[i].officialWebsite, loginUrl: guides[i].loginUrl,
+    manageSubscriptionUrl: guides[i].manageSubscriptionUrl, cancellationUrl: guides[i].cancellationUrl,
+    helpUrl: guides[i].helpUrl, verifiedManually: false
   }));
   busy(btn, true, "Vérification");
   try {
     const data = await api("/api/verify", { services });
-    data.guides.forEach((g, k) => { guides[indices[k]] = g; });
+    data.guides.forEach((g, k) => { guides[targets[k]] = g; });
     render();
-    toast("Vérification terminée (" + data.guides.length + ").");
+    toast("Vérification terminée (" + data.guides.length + ")." + (skipped ? " " + skipped + " ligne(s) manuelle(s) ignorée(s)." : ""));
   } catch (err) { toast("Erreur : " + err.message, true); }
   finally { busy(btn, false); }
 }
@@ -308,7 +331,7 @@ document.getElementById("btn-verify-all").onclick = async (e) => {
 document.getElementById("btn-add").onclick = () => {
   guides.push({ serviceName:"Nouveau service", normalizedName:"", category:"needs_review", country:"FR",
     officialWebsite:"", loginUrl:"", manageSubscriptionUrl:"", cancellationUrl:"", helpUrl:"",
-    sourceUrls:[], confidenceScore:0, status:"needs_review", lastCheckedAt:"", notes:"" });
+    sourceUrls:[], confidenceScore:0, status:"needs_review", lastCheckedAt:"", notes:"", verifiedManually:false });
   render();
 };
 
@@ -389,7 +412,7 @@ document.getElementById("btn-fs-to-table").onclick = () => {
     manageSubscriptionUrl: d.manageSubscriptionUrl || "", cancellationUrl: d.cancellationUrl || "",
     helpUrl: d.helpUrl || "", sourceUrls: d.sourceUrls || [],
     confidenceScore: d.confidenceScore || 0, status: d.status || "needs_review",
-    lastCheckedAt: d.lastCheckedAt || "", notes: d.notes || ""
+    lastCheckedAt: d.lastCheckedAt || "", notes: d.notes || "", verifiedManually: !!d.verifiedManually
   }));
   render();
   toast(guides.length + " document(s) copié(s) dans le tableau d'édition.");

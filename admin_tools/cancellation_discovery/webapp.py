@@ -102,15 +102,27 @@ class AdminRequestHandler(BaseHTTPRequestHandler):
         if not services:
             raise ValueError("Aucun service à vérifier.")
         country = data.get("country") or "FR"
-        guides = [
-            verify_service(
-                item["serviceName"],
-                item.get("category", "needs_review"),
-                item.get("officialWebsite", ""),
-                country,
+        guides: list[CancellationGuide] = []
+        for item in services:
+            if item.get("verifiedManually"):
+                # Admin-certified row: keep everything as entered, never re-search or overwrite.
+                guide = CancellationGuide.from_dict(item)
+                guide.verifiedManually = True
+                guide.status = "verified"
+                guides.append(guide)
+                continue
+            guides.append(
+                verify_service(
+                    item["serviceName"],
+                    item.get("category", "needs_review"),
+                    official_website=item.get("officialWebsite", ""),
+                    country=country,
+                    login_url=item.get("loginUrl", ""),
+                    manage_subscription_url=item.get("manageSubscriptionUrl", ""),
+                    cancellation_url=item.get("cancellationUrl", ""),
+                    help_url=item.get("helpUrl", ""),
+                )
             )
-            for item in services
-        ]
         self._send_json({"guides": _guides_payload(guides)})
 
     def _handle_export(self, data: dict) -> None:
