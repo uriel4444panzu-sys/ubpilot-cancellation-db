@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 from .categories import CATEGORIES
 from .curated_examples import CURATED_EXAMPLES
 from .models import CancellationGuide, normalize_name, now_iso
-from .search import SearchResult, search_web
+from .search import SearchResult, official_website_from_wikidata, search_web
 
 LINK_QUERIES = {
     "officialWebsite": ["{service} site officiel France"],
@@ -64,22 +64,37 @@ def choose_best_result(results: list[SearchResult], service: str, known_domain: 
     return ranked[0][1] if ranked and ranked[0][0] >= 3 else ""
 
 
-def verify_service(service_name: str, category: str, official_website: str = "", country: str = "FR") -> CancellationGuide:
+def verify_service(
+    service_name: str,
+    category: str,
+    official_website: str = "",
+    country: str = "FR",
+    login_url: str = "",
+    manage_subscription_url: str = "",
+    cancellation_url: str = "",
+    help_url: str = "",
+) -> CancellationGuide:
     curated = CURATED_EXAMPLES.get(normalize_name(service_name), {})
     initial_official = official_website or curated.get("officialWebsite", "")
+    # Existing links provided by the admin are kept as-is; the search below only fills the blanks
+    # (fields with a value are skipped), so manual entries are never overwritten.
     guide = CancellationGuide.from_partial(
         service_name,
         category,
         country=country,
         officialWebsite=initial_official,
-        loginUrl=curated.get("loginUrl", ""),
-        manageSubscriptionUrl=curated.get("manageSubscriptionUrl", ""),
-        cancellationUrl=curated.get("cancellationUrl", ""),
-        helpUrl=curated.get("helpUrl", ""),
+        loginUrl=login_url or curated.get("loginUrl", ""),
+        manageSubscriptionUrl=manage_subscription_url or curated.get("manageSubscriptionUrl", ""),
+        cancellationUrl=cancellation_url or curated.get("cancellationUrl", ""),
+        helpUrl=help_url or curated.get("helpUrl", ""),
         confidenceScore=0.0,
         status="not_found",
         notes="Verified from public search results only; no login, captcha, paywall, or protected flow was accessed.",
     )
+    if not initial_official:
+        wikidata_site = official_website_from_wikidata(service_name)
+        if wikidata_site:
+            guide.officialWebsite = wikidata_site
     if curated.get("notes"):
         guide.notes = f"{guide.notes} {curated['notes']}"
     sources: set[str] = {url for url in [guide.officialWebsite, guide.loginUrl, guide.manageSubscriptionUrl, guide.cancellationUrl, guide.helpUrl] if url}

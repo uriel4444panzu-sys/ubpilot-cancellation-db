@@ -38,6 +38,7 @@ class CancellationGuide:
     status: str = "needs_review"
     lastCheckedAt: str = field(default_factory=now_iso)
     notes: str = ""
+    verifiedManually: bool = False
 
     def to_dict(self) -> dict:
         """Serialize the guide using the exact Firestore field names."""
@@ -78,4 +79,5 @@ class CancellationGuide:
             clean["confidenceScore"] = 0.0
         if clean.get("status") not in VALID_STATUSES:
             clean["status"] = "needs_review"
+        clean["verifiedManually"] = bool(clean.get("verifiedManually", False))
         return cls(**clean)
